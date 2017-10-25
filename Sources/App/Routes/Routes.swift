@@ -34,25 +34,21 @@ extension Droplet {
         
         post("upload") { req in
             print("receive asking")
-            
-            // Avoid 502 bad gateway
-            queue.async {
-                guard let formData = req.formData, let bytes = formData["file"]?.bytes else {
-                    return
-                }
-                
-                let data = Data.init(bytes)
-                let dataFolder = "data"
-                let zipPath = "data/file"
-                print("checking")
-                if !FileManager.default.fileExists(atPath: dataFolder) {
-                    try? FileManager.default.createDirectory(atPath: dataFolder, withIntermediateDirectories: true, attributes: nil)
-                }
-                
-                print("saving")
-                try? data.write(to: URL(fileURLWithPath: zipPath, isDirectory: false))
-                print("saved")
+            guard let formData = req.formData, let bytes = formData["file"]?.bytes else {
+                return "Wrong format"
             }
+            
+            let data = Data.init(bytes)
+            let dataFolder = "data"
+            let zipPath = "data/file"
+            print("checking")
+            if !FileManager.default.fileExists(atPath: dataFolder) {
+                try? FileManager.default.createDirectory(atPath: dataFolder, withIntermediateDirectories: true, attributes: nil)
+            }
+            
+            print("saving")
+            try? data.write(to: URL(fileURLWithPath: zipPath, isDirectory: false))
+            print("saved")
             
             return "saving"
         }
