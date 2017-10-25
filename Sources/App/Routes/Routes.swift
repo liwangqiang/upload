@@ -1,5 +1,8 @@
 import Vapor
 import Foundation
+import Dispatch
+
+let queue = DispatchQueue.init(label: "com.bruce.upload")
 
 extension Droplet {
     func setupRoutes() throws {
@@ -30,20 +33,28 @@ extension Droplet {
         }
         
         post("upload") { req in
-            guard let formData = req.formData, let bytes = formData["file"]?.bytes else {
-                return "Error Format"
+            print("receive asking")
+            
+            // Avoid 502 bad gateway
+            queue.async {
+                guard let formData = req.formData, let bytes = formData["file"]?.bytes else {
+                    return
+                }
+                
+                let data = Data.init(bytes)
+                let dataFolder = "data"
+                let zipPath = "data/file"
+                print("checking")
+                if !FileManager.default.fileExists(atPath: dataFolder) {
+                    try? FileManager.default.createDirectory(atPath: dataFolder, withIntermediateDirectories: true, attributes: nil)
+                }
+                
+                print("saving")
+                try? data.write(to: URL(fileURLWithPath: zipPath, isDirectory: false))
+                print("saved")
             }
             
-            let data = Data.init(bytes)
-            let dataFolder = "data"
-            let zipPath = "data/file"
-            
-            if !FileManager.default.fileExists(atPath: dataFolder) {
-                try FileManager.default.createDirectory(atPath: dataFolder, withIntermediateDirectories: true, attributes: nil)
-            }
-            
-            try data.write(to: URL(fileURLWithPath: zipPath, isDirectory: false))
-            return "Saved"
+            return "saving"
         }
 
         // response to requests to /info domain
